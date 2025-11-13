@@ -44,6 +44,10 @@
             justify-content: center;
             padding: 2rem; /* padding: p-4 md:p-8 */
         }
+        /* تحسين مظهر حقل التاريخ في الوضع الداكن */
+        input[type="date"] {
+            color-scheme: light; /* إجبار واجهة التاريخ على أن تكون فاتحة */
+        }
     </style>
 </head>
 <body>
@@ -115,27 +119,28 @@
                                 class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
                     </div>
                     
-                    <!-- حقل رقم الملف -->
+                    <!-- حقل رقم الملف مع إشارة (اختياري) -->
                     <div>
                         <label for="fileNumber" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
                             <i data-lucide="folder-open" class="icon-size ml-2"></i>
-                            رقم الملف (إن وجد)
+                            رقم الملف <span class="text-xs text-gray-400 font-normal mr-1">(اختياري)</span>
                         </label>
                         <input type="text" id="fileNumber" name="fileNumber" 
                             class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-                            placeholder="ادخل رقم ملف المريض (اختياري)">
+                            placeholder="ادخل رقم ملف المريض">
                     </div>
                 </div>
 
                 <!-- رسالة التحذير من التاريخ غير المتاح -->
-                <div id="date-warning" class="hidden p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg flex items-center text-sm">
-                    <i data-lucide="alert-triangle" class="icon-size w-5 h-5 ml-2 flex-shrink-0"></i>
-                    <span id="warning-text"></span>
+                <div id="date-warning" class="hidden p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg flex items-start text-sm" role="alert">
+                    <i data-lucide="alert-triangle" class="icon-size w-5 h-5 ml-2 flex-shrink-0 mt-0.5"></i>
+                    <span id="warning-text" class="flex-grow"></span>
                 </div>
 
                 <!-- زر الإرسال -->
                 <button type="submit" id="submitBtn"
-                        class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out transform hover:scale-[1.01]">
+                        class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out transform hover:scale-[1.01]"
+                        disabled>
                     <span id="button-text">تأكيد وحجز الموعد</span>
                     <i data-lucide="send" class="icon-size mr-2"></i>
                 </button>
@@ -161,8 +166,8 @@
                         شكراً لك! لقد تم إرسال طلب حجز موعدك. سيتم الاتصال بك قريباً من قبل الفريق الطبي لتأكيد الموعد النهائي.
                     </p>
                     <div class="mt-4 p-2 bg-gray-50 rounded-lg text-xs text-gray-600">
-                        <p class="font-medium">التاريخ والطبيب:</p>
-                        <p id="booked-details"></p>
+                        <p class="font-medium mb-1">بيانات الموعد:</p>
+                        <p id="booked-details" class="font-semibold text-sm"></p>
                     </div>
                 </div>
             </div>
@@ -201,7 +206,6 @@
             const dateWarning = document.getElementById('date-warning');
             const warningText = document.getElementById('warning-text');
 
-
             // تعيين الحد الأدنى لتاريخ اليوم لمنع الحجز في الماضي
             const today = new Date().toISOString().split('T')[0];
             dateInput.setAttribute('min', today);
@@ -231,7 +235,7 @@
             const DOCTOR_ABSENCE = {
                 'دكتور عبد الغفار طه': [0, 4], // الأحد (0) والخميس (4) غياب. الحضور: 1, 2, 3, 5, 6
                 'دكتور علاء السباعي': [5],    // الجمعة (5) غياب. الحضور: 0, 1, 2, 3, 4, 6
-                'دكتور محمد نسيم': [5],       // الجمعة (5) غياب. الحضور: 0, 1, 2, 3, 4, 6
+                'دكتور محمد نسيم': [5],        // الجمعة (5) غياب. الحضور: 0, 1, 2, 3, 4, 6
             };
 
             /**
@@ -242,11 +246,22 @@
                 const selectedDate = dateInput.value;
                 const selectedDoctor = doctorNameInput.value;
 
-                // 1. تحقق من ملء الحقول المطلوبة (للتأكد من اختيار الطبيب)
-                // يتم تعطيل الزر مؤقتاً إذا لم يتم اختيار طبيب وتاريخ بعد
+                // 1. تحقق مبدئي من ملء الحقول المطلوبة لتحديد ما إذا كان يجب تمكين الزر
+                const isFormValid = form.checkValidity();
+
                 if (!selectedDoctor || !selectedDate) {
+                    // إذا كان أحد الحقلين المطلوبين فارغاً، عطل الزر وأخفِ التحذير
+                    submitBtn.disabled = !isFormValid;
                     dateWarning.classList.add('hidden');
-                    return true; 
+                    return isFormValid; 
+                }
+
+                // 2. التحقق من تاريخ ماضٍ
+                if (selectedDate < today) {
+                    submitBtn.disabled = true;
+                    warningText.innerHTML = `التاريخ المختار <strong>(${selectedDate})</strong> هو تاريخ ماضٍ. يرجى اختيار تاريخ مستقبلي.`;
+                    dateWarning.classList.remove('hidden');
+                    return false;
                 }
 
                 const dateObj = new Date(selectedDate + 'T00:00:00'); // إضافة التوقيت لتجنب مشاكل المنطقة الزمنية
@@ -266,42 +281,59 @@
                         ? availableDaysNames.join('، ')
                         : 'لا يوجد مواعيد متاحة هذا الأسبوع.';
 
-                    warningText.innerHTML = `التاريخ المختار غير متاح للدكتور <strong>${selectedDoctor}</strong>. يرجى اختيار يوم آخر.<br>مواعيد حضوره المتاحة هي: <strong>${availabilityMessage}</strong>.`;
+                    warningText.innerHTML = `التاريخ المختار **(${DAYS_OF_WEEK[dayIndex]})** غير متاح للدكتور <strong>${selectedDoctor}</strong>. يرجى اختيار يوم آخر.
+                    <br>مواعيد حضوره المتاحة هي: <strong>${availabilityMessage}</strong>.`;
                     dateWarning.classList.remove('hidden');
                     
                     return false;
                 } else {
                     // التاريخ متاح
-                    submitBtn.disabled = false;
+                    submitBtn.disabled = !isFormValid; // يتم تمكينه فقط إذا كان النموذج بالكامل صالحًا
                     dateWarning.classList.add('hidden');
-                    return true;
+                    return isFormValid;
                 }
             };
 
-            // ربط التحقق بتغيير التاريخ واختيار الطبيب
+            // ربط التحقق بتغيير التاريخ واختيار الطبيب وباقي حقول الإدخال المطلوبة
             dateInput.addEventListener('change', validateBooking);
             doctorNameInput.addEventListener('change', validateBooking);
+            document.getElementById('childName').addEventListener('input', validateBooking);
+            document.getElementById('phone').addEventListener('input', validateBooking);
             
             // تهيئة حالة الزر عند التحميل
             validateBooking();
 
+
+            // دالة لعرض رسالة الحالة (تستخدم الآن للخطأ فقط)
+            const showStatusMessage = (message, type) => {
+                statusMessage.textContent = message;
+                statusMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800');
+                
+                if (type === 'error') {
+                    statusMessage.classList.add('bg-red-100', 'text-red-800');
+                } else {
+                    statusMessage.classList.add('hidden'); // يجب ألا تستخدم لرسائل النجاح
+                }
+            };
+
+            // ** الدوال المتعلقة بالـ Modal **
 
             // دالة لعرض النافذة المنبثقة للنجاح
             const showSuccessModal = (date, doctor) => {
                 const dateParts = date.split('-'); // YYYY-MM-DD
                 const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`; // DD/MM/YYYY
 
-                bookedDetails.textContent = `${formattedDate} - ${doctor}`;
+                bookedDetails.innerHTML = `الطبيب: <span class="text-blue-600">${doctor}</span> <br>التاريخ: <span class="text-blue-600">${formattedDate}</span>`;
 
                 // إظهار المودال مع تأثيرات الحركة
                 successModal.classList.remove('hidden');
                 setTimeout(() => {
                     modalContent.classList.remove('scale-95', 'opacity-0');
                     modalContent.classList.add('scale-100', 'opacity-100');
-                }, 10); // تأخير بسيط لضمان عمل الحركة
+                }, 10);
             };
 
-            // دالة لإخفاء النافذة المنبثقة للنجاح
+            // دالة لإخفاء النافذة المنبثقة للنجاح (تستخدم فقط عند النقر على الخلفية)
             const hideSuccessModal = () => {
                 modalContent.classList.remove('scale-100', 'opacity-100');
                 modalContent.classList.add('scale-95', 'opacity-0');
@@ -311,10 +343,23 @@
                 }, 300); // إخفاء بعد انتهاء الحركة
             };
 
-            // معالج حدث الإغلاق (تم إلغاء وظيفة إغلاق الصفحة)
-            closeModalBtn.addEventListener('click', hideSuccessModal);
+            // ** معالجات أحداث الـ Modal **
+            // تم تعديل معالج حدث زر "حسناً، فهمت" ليقوم بالتحويل إلى الرابط المطلوب بعد إغلاق النافذة المنبثقة
+            closeModalBtn.addEventListener('click', () => {
+                // بدء إخفاء النافذة المنبثقة مع تأثير الحركة
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                modalContent.classList.add('scale-95', 'opacity-0');
+                
+                // التحويل بعد انتهاء مدة الحركة (300 مللي ثانية)
+                setTimeout(() => {
+                    // إخفاء الـ modal كإجراء احتياطي قبل التحويل
+                    successModal.classList.add('hidden'); 
+                    window.location.href = 'https://tabarakmariouteya.site/'; // التوجيه إلى الرابط الجديد
+                }, 300);
+            });
+
             successModal.addEventListener('click', (e) => {
-                // إغلاق عند النقر على الخلفية (Backdrop)
+                // إغلاق عند النقر على الخلفية (Backdrop) - لا يتم التحويل
                 if (e.target === successModal) {
                     hideSuccessModal();
                 }
@@ -325,7 +370,6 @@
             const submitFormToGoogleForms = async (formData) => {
                 const data = new URLSearchParams();
                 
-                // يتم إرسال اسم الطفل كـ 'childName' لكن معرّف الإدخال (Entry ID) هو الخاص به.
                 const childName = formData.get('childName');
                 const date = formData.get('date');
                 const doctor = formData.get('doctorName');
@@ -342,35 +386,21 @@
                     const response = await fetch(GOOGLE_FORM_URL, {
                         method: 'POST',
                         body: data,
-                        mode: 'no-cors', // يجب استخدام 'no-cors' لتجاوز قيود CORS الخاصة بجوجل فورم
+                        mode: 'no-cors', 
                     });
 
                     // في وضع 'no-cors'، نفترض النجاح إذا لم يحدث خطأ في الشبكة.
                     showSuccessModal(date, doctor); // عرض النافذة المنبثقة للنجاح
                     form.reset(); // تفريغ النموذج بعد النجاح
-                    submitBtn.disabled = false;
-                    buttonText.textContent = 'تأكيد وحجز الموعد';
                     validateBooking(); // إعادة التحقق لضبط حالة الزر بعد التفريغ
 
                 } catch (error) {
                     console.error('Submission Error:', error);
-                    // استخدام رسالة الحالة القديمة للخطأ فقط
-                    showStatusMessage('حدث خطأ أثناء إرسال الحجز. يرجى المحاولة لاحقاً.', 'error');
-                    submitBtn.disabled = false;
+                    showStatusMessage('حدث خطأ أثناء إرسال الحجز. يرجى المحاولة لاحقاً أو التأكد من اتصالك بالإنترنت.', 'error');
+                } finally {
+                    // إرجاع حالة الزر بغض النظر عن النتيجة
+                    submitBtn.disabled = !form.checkValidity();
                     buttonText.textContent = 'تأكيد وحجز الموعد';
-                }
-            };
-
-            // دالة لعرض رسالة الحالة (تستخدم الآن للخطأ فقط)
-            const showStatusMessage = (message, type) => {
-                statusMessage.textContent = message;
-                statusMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800');
-                
-                if (type === 'error') {
-                    statusMessage.classList.add('bg-red-100', 'text-red-800');
-                } else {
-                    // لضمان عدم عرض رسالة النجاح في هذه الدالة
-                    statusMessage.classList.add('hidden');
                 }
             };
 
