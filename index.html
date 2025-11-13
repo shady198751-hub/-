@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حجز موعد في عيادة الأطفال</title>
+    <!-- تضمين Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- تضمين أيقونات Lucide React for modern icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* تخصيص خط Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* لون خلفية فاتح */
+            display: flex; /* لضمان تمركز المحتوى والتذييل */
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        /* تصميم حقل التاريخ ليتوافق مع اللغة العربية */
+        input[type="date"]::-webkit-inner-spin-button,
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 1;
+            cursor: pointer;
+            filter: invert(0.5); /* لجعل الأيقونة مرئية بشكل جيد */
+        }
+        .icon-size {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+        }
+        /* تصميم النافذة المنبثقة (Modal) */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 50;
+        }
+        /* لضمان توسيط محتوى الحجز وجعله مرناً */
+        #main-content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem; /* padding: p-4 md:p-8 */
+        }
+    </style>
+</head>
+<body>
+    <div id="main-content-wrapper">
+        <div id="booking-container" class="w-full max-w-2xl bg-white shadow-2xl rounded-xl p-6 md:p-10 border border-blue-100/50">
+            
+            <!-- تنبيه نظام تحت التجربة -->
+            <div class="p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg text-sm mb-6 text-center font-medium">
+                <p>ملاحظة: هذا نظام حجز تحت التجربة.</p>
+            </div>
+
+            <!-- عنوان التطبيق -->
+            <header class="text-center mb-8">
+                <div class="flex items-center justify-center mb-3 text-blue-600">
+                    <i data-lucide="baby" class="icon-size mr-2"></i>
+                    <h1 class="text-3xl font-extrabold text-blue-700">حجز عيادات الأطفال</h1>
+                </div>
+                <p class="text-gray-500 mt-2 text-lg">نحن هنا لخدمة طفلك. يرجى ملء التفاصيل لحجز موعدك.</p>
+            </header>
+
+            <!-- نموذج الحجز -->
+            <form id="booking-form" class="space-y-6">
+
+                <!-- حقل اسم الطفل -->
+                <div>
+                    <label for="childName" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                        <i data-lucide="smile" class="icon-size ml-2"></i>
+                        اسم الطفل
+                    </label>
+                    <input type="text" id="childName" name="childName" required
+                            class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                            placeholder="ادخل اسم الطفل">
+                </div>
+
+                <!-- حقل رقم الهاتف -->
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                        <i data-lucide="phone" class="icon-size ml-2"></i>
+                        رقم الهاتف
+                    </label>
+                    <input type="tel" id="phone" name="phone" required
+                            class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                            placeholder="مثال: 05xxxxxxx">
+                </div>
+
+                <!-- حقل اسم الطبيب -->
+                <div>
+                    <label for="doctorName" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                        <i data-lucide="user-check" class="icon-size ml-2"></i>
+                        اسم طبيب الأطفال
+                    </label>
+                    <select id="doctorName" name="doctorName" required
+                            class="mt-1 block w-full px-4 py-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+                        <option value="" disabled selected>اختر طبيباً</option>
+                        <option value="دكتور عبد الغفار طه">دكتور عبد الغفار طه</option>
+                        <option value="دكتور علاء السباعي">دكتور علاء السباعي</option>
+                        <option value="دكتور محمد نسيم">دكتور محمد نسيم</option>
+                    </select>
+                </div>
+
+                <!-- حقل التاريخ ورقم الملف -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                            <i data-lucide="calendar-check" class="icon-size ml-2"></i>
+                            التاريخ المطلوب
+                        </label>
+                        <input type="date" id="date" name="date" required
+                                class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+                    </div>
+                    
+                    <!-- حقل رقم الملف -->
+                    <div>
+                        <label for="fileNumber" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                            <i data-lucide="folder-open" class="icon-size ml-2"></i>
+                            رقم الملف (إن وجد)
+                        </label>
+                        <input type="text" id="fileNumber" name="fileNumber" 
+                            class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                            placeholder="ادخل رقم ملف المريض (اختياري)">
+                    </div>
+                </div>
+
+                <!-- رسالة التحذير من التاريخ غير المتاح -->
+                <div id="date-warning" class="hidden p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg flex items-center text-sm">
+                    <i data-lucide="alert-triangle" class="icon-size w-5 h-5 ml-2 flex-shrink-0"></i>
+                    <span id="warning-text"></span>
+                </div>
+
+                <!-- زر الإرسال -->
+                <button type="submit" id="submitBtn"
+                        class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out transform hover:scale-[1.01]">
+                    <span id="button-text">تأكيد وحجز الموعد</span>
+                    <i data-lucide="send" class="icon-size mr-2"></i>
+                </button>
+                
+                <!-- رسالة الحالة (خطأ) -->
+                <div id="status-message" class="mt-4 p-4 rounded-lg text-center hidden" role="alert"></div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- النافذة المنبثقة للنجاح (Success Modal) -->
+    <div id="success-modal" class="hidden fixed inset-0 flex items-center justify-center modal-backdrop z-50">
+        <div id="modal-content" class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <i data-lucide="check-circle" class="icon-size w-6 h-6 text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900" id="modal-title">تم الحجز بنجاح!</h3>
+                <div class="mt-4">
+                    <p class="text-sm text-gray-500">
+                        شكراً لك! لقد تم إرسال طلب حجز موعدك. سيتم الاتصال بك قريباً من قبل الفريق الطبي لتأكيد الموعد النهائي.
+                    </p>
+                    <div class="mt-4 p-2 bg-gray-50 rounded-lg text-xs text-gray-600">
+                        <p class="font-medium">التاريخ والطبيب:</p>
+                        <p id="booked-details"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6">
+                <button type="button" id="close-modal-btn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150">
+                    حسناً، فهمت
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- تذييل الصفحة -->
+    <footer class="mt-auto p-4 text-center text-xs text-gray-500 border-t border-gray-200 bg-gray-50">
+        جميع الحقوق محفوظة. © 2025 مستشفى تبارك للولادة والأطفال. | Designed By Shady Yassin
+    </footer>
+
+    <!-- كود JavaScript للتعامل مع الإرسال إلى Google Form ومنطق التحقق -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // تهيئة أيقونات Lucide
+            lucide.createIcons();
+
+            const form = document.getElementById('booking-form');
+            const submitBtn = document.getElementById('submitBtn');
+            const buttonText = document.getElementById('button-text');
+            const statusMessage = document.getElementById('status-message');
+            
+            const successModal = document.getElementById('success-modal');
+            const modalContent = document.getElementById('modal-content');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const bookedDetails = document.getElementById('booked-details');
+            
+            const dateInput = document.getElementById('date');
+            const doctorNameInput = document.getElementById('doctorName');
+            const dateWarning = document.getElementById('date-warning');
+            const warningText = document.getElementById('warning-text');
+
+
+            // تعيين الحد الأدنى لتاريخ اليوم لمنع الحجز في الماضي
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+
+
+            // 🟢 1. رابط الإرسال الخاص بنموذجك.
+            const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeWNMGy0Zng3yN1NiBnwj5NFG19DXA4T15i2k1h1VYMggH1tw/formResponse';
+
+            // 🟢 2. معرّفات الدخول (Entry IDs) المستخرجة.
+            // entry.2084437554: اسم الطفل
+            // entry.1545096345: رقم الهاتف
+            // entry.635361516: اسم الطبيب
+            // entry.612226324: التاريخ المطلوب
+            // entry.1813748108: رقم الملف
+            const FORM_FIELDS = {
+                childName: 'entry.2084437554',
+                phone: 'entry.1545096345',
+                doctorName: 'entry.635361516',
+                date: 'entry.612226324',
+                fileNumber: 'entry.1813748108'
+            };
+
+            // أيام الأسبوع (بشكل رقمي: 0=الأحد، 1=الاثنين... 6=السبت)
+            const DAYS_OF_WEEK = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+            // قواعد الحضور: أيام الغياب (الأرقام التي تمثل أيام الأسبوع)
+            const DOCTOR_ABSENCE = {
+                'دكتور عبد الغفار طه': [0, 4], // الأحد (0) والخميس (4) غياب. الحضور: 1, 2, 3, 5, 6
+                'دكتور علاء السباعي': [5],    // الجمعة (5) غياب. الحضور: 0, 1, 2, 3, 4, 6
+                'دكتور محمد نسيم': [5],       // الجمعة (5) غياب. الحضور: 0, 1, 2, 3, 4, 6
+            };
+
+            /**
+             * دالة للتحقق من توافر الطبيب في التاريخ المحدد.
+             * وتحديث رسالة التحذير وزر الإرسال.
+             */
+            const validateBooking = () => {
+                const selectedDate = dateInput.value;
+                const selectedDoctor = doctorNameInput.value;
+
+                // 1. تحقق من ملء الحقول المطلوبة (للتأكد من اختيار الطبيب)
+                // يتم تعطيل الزر مؤقتاً إذا لم يتم اختيار طبيب وتاريخ بعد
+                if (!selectedDoctor || !selectedDate) {
+                    dateWarning.classList.add('hidden');
+                    return true; 
+                }
+
+                const dateObj = new Date(selectedDate + 'T00:00:00'); // إضافة التوقيت لتجنب مشاكل المنطقة الزمنية
+                const dayIndex = dateObj.getDay(); // 0=الأحد, 1=الاثنين, ..., 6=السبت
+                
+                const absenceDays = DOCTOR_ABSENCE[selectedDoctor];
+
+                if (absenceDays && absenceDays.includes(dayIndex)) {
+                    // التاريخ غير متاح. يجب إظهار رسالة التحذير وتحديد الأيام المتاحة.
+                    submitBtn.disabled = true;
+                    
+                    // حساب أيام الحضور المتاحة كنص
+                    const availableDaysIndices = [0, 1, 2, 3, 4, 5, 6].filter(day => !absenceDays.includes(day));
+                    const availableDaysNames = availableDaysIndices.map(index => DAYS_OF_WEEK[index]);
+                    
+                    const availabilityMessage = availableDaysNames.length > 0
+                        ? availableDaysNames.join('، ')
+                        : 'لا يوجد مواعيد متاحة هذا الأسبوع.';
+
+                    warningText.innerHTML = `التاريخ المختار غير متاح للدكتور <strong>${selectedDoctor}</strong>. يرجى اختيار يوم آخر.<br>مواعيد حضوره المتاحة هي: <strong>${availabilityMessage}</strong>.`;
+                    dateWarning.classList.remove('hidden');
+                    
+                    return false;
+                } else {
+                    // التاريخ متاح
+                    submitBtn.disabled = false;
+                    dateWarning.classList.add('hidden');
+                    return true;
+                }
+            };
+
+            // ربط التحقق بتغيير التاريخ واختيار الطبيب
+            dateInput.addEventListener('change', validateBooking);
+            doctorNameInput.addEventListener('change', validateBooking);
+            
+            // تهيئة حالة الزر عند التحميل
+            validateBooking();
+
+
+            // دالة لعرض النافذة المنبثقة للنجاح
+            const showSuccessModal = (date, doctor) => {
+                const dateParts = date.split('-'); // YYYY-MM-DD
+                const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`; // DD/MM/YYYY
+
+                bookedDetails.textContent = `${formattedDate} - ${doctor}`;
+
+                // إظهار المودال مع تأثيرات الحركة
+                successModal.classList.remove('hidden');
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 10); // تأخير بسيط لضمان عمل الحركة
+            };
+
+            // دالة لإخفاء النافذة المنبثقة للنجاح
+            const hideSuccessModal = () => {
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                modalContent.classList.add('scale-95', 'opacity-0');
+                
+                setTimeout(() => {
+                    successModal.classList.add('hidden');
+                }, 300); // إخفاء بعد انتهاء الحركة
+            };
+
+            // معالج حدث الإغلاق (تم إلغاء وظيفة إغلاق الصفحة)
+            closeModalBtn.addEventListener('click', hideSuccessModal);
+            successModal.addEventListener('click', (e) => {
+                // إغلاق عند النقر على الخلفية (Backdrop)
+                if (e.target === successModal) {
+                    hideSuccessModal();
+                }
+            });
+
+
+            // دالة لإرسال البيانات
+            const submitFormToGoogleForms = async (formData) => {
+                const data = new URLSearchParams();
+                
+                // يتم إرسال اسم الطفل كـ 'childName' لكن معرّف الإدخال (Entry ID) هو الخاص به.
+                const childName = formData.get('childName');
+                const date = formData.get('date');
+                const doctor = formData.get('doctorName');
+                
+                // تعبئة البيانات باستخدام معرّفات الحقول (Entry IDs)
+                data.append(FORM_FIELDS.childName, childName);
+                data.append(FORM_FIELDS.phone, formData.get('phone'));
+                data.append(FORM_FIELDS.doctorName, doctor);
+                data.append(FORM_FIELDS.date, date);
+                data.append(FORM_FIELDS.fileNumber, formData.get('fileNumber')); 
+                
+                try {
+                    // إرسال البيانات
+                    const response = await fetch(GOOGLE_FORM_URL, {
+                        method: 'POST',
+                        body: data,
+                        mode: 'no-cors', // يجب استخدام 'no-cors' لتجاوز قيود CORS الخاصة بجوجل فورم
+                    });
+
+                    // في وضع 'no-cors'، نفترض النجاح إذا لم يحدث خطأ في الشبكة.
+                    showSuccessModal(date, doctor); // عرض النافذة المنبثقة للنجاح
+                    form.reset(); // تفريغ النموذج بعد النجاح
+                    submitBtn.disabled = false;
+                    buttonText.textContent = 'تأكيد وحجز الموعد';
+                    validateBooking(); // إعادة التحقق لضبط حالة الزر بعد التفريغ
+
+                } catch (error) {
+                    console.error('Submission Error:', error);
+                    // استخدام رسالة الحالة القديمة للخطأ فقط
+                    showStatusMessage('حدث خطأ أثناء إرسال الحجز. يرجى المحاولة لاحقاً.', 'error');
+                    submitBtn.disabled = false;
+                    buttonText.textContent = 'تأكيد وحجز الموعد';
+                }
+            };
+
+            // دالة لعرض رسالة الحالة (تستخدم الآن للخطأ فقط)
+            const showStatusMessage = (message, type) => {
+                statusMessage.textContent = message;
+                statusMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800');
+                
+                if (type === 'error') {
+                    statusMessage.classList.add('bg-red-100', 'text-red-800');
+                } else {
+                    // لضمان عدم عرض رسالة النجاح في هذه الدالة
+                    statusMessage.classList.add('hidden');
+                }
+            };
+
+            // معالج حدث إرسال النموذج
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                // تأكد من أن التحقق الأخير صحيح قبل الإرسال
+                if (!validateBooking()) {
+                    return;
+                }
+
+                // إخفاء رسالة الخطأ السابقة
+                statusMessage.classList.add('hidden');
+
+                // منع الإرسال المتعدد وتعطيل الزر مؤقتاً
+                submitBtn.disabled = true;
+                buttonText.textContent = 'جاري الإرسال...';
+                
+                const formData = new FormData(form);
+                submitFormToGoogleForms(formData);
+            });
+            
+        });
+    </script>
+</body>
+</html>
